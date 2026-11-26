@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartPark – Parking Management System</title>
+<style>
+:root{--bg:#f3f5fb;--card:#fff;--tx:#14213d;--mut:#64708a;--br:#e1e6f0;--pri:#3b5bdb;--ok:#2f9e44;--okb:#e3f5e8;--bad:#e03131;--badb:#fdeaea;--code:#eef1f8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1422;--card:#182036;--tx:#e8ecf8;--mut:#93a0bd;--br:#2a3552;--pri:#748ffc;--ok:#69db7c;--okb:#16301f;--bad:#ff8787;--badb:#3a1c20;--code:#101828}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1422;--card:#182036;--tx:#e8ecf8;--mut:#93a0bd;--br:#2a3552;--pri:#748ffc;--ok:#69db7c;--okb:#16301f;--bad:#ff8787;--badb:#3a1c20;--code:#101828}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--br);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:10}
+.logo{font-weight:800;font-size:19px;display:flex;align-items:center;gap:8px}.logo i{background:var(--pri);color:#fff;font-style:normal;border-radius:8px;width:30px;height:30px;display:grid;place-items:center}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+nav button,.btn{font:inherit;border:1px solid var(--br);background:transparent;color:var(--tx);padding:8px 14px;border-radius:9px;cursor:pointer}
+nav button.on,.btn.p{background:var(--pri);color:#fff;border-color:var(--pri)}.btn.p{font-weight:600}.btn.d{color:var(--bad)}
+main{max-width:1080px;margin:0 auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--br);border-radius:14px;padding:16px;margin-bottom:16px}
+.stat b{display:block;font-size:28px}.stat span{color:var(--mut);font-size:13px}
+h2{margin:0 0 12px;font-size:17px}h3{margin:0 0 8px;font-size:14px;color:var(--mut)}
+.bar{height:8px;background:var(--br);border-radius:9px;overflow:hidden;margin:6px 0 12px}.bar div{height:100%;background:var(--pri)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.slot{border-radius:10px;padding:8px 4px;text-align:center;font:inherit;font-size:12px;border:1px solid transparent;cursor:default}
+.slot.f{background:var(--okb);color:var(--ok);border-color:var(--ok)}.slot.o{background:var(--badb);color:var(--bad);border-color:var(--bad);cursor:pointer}
+.slot big{display:block;font-size:20px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
+input,select{width:100%;font:inherit;padding:10px;border-radius:9px;border:1px solid var(--br);background:var(--bg);color:var(--tx)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--br);white-space:nowrap}th{color:var(--mut);font-weight:600}
+.tag{padding:2px 8px;border-radius:20px;font-size:12px;background:var(--okb);color:var(--ok)}.tag.a{background:var(--badb);color:var(--bad)}
+.bill{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--br)}.bill.t{font-size:20px;font-weight:700;border:0}
+pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;font-size:12.5px;margin:0 0 10px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,40px);background:var(--ok);color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:20}#toast.show{opacity:1;transform:translate(-50%,0)}#toast.bad{background:var(--bad)}
+.muted{color:var(--mut)}.rc{border:2px dashed var(--br);border-radius:12px;padding:14px;margin-top:12px}
+</style></head><body>
+<header><div class="logo"><i>P</i>SmartPark</div>
+<nav><button data-t="dash">Dashboard</button><button data-t="entry">Vehicle Entry</button><button data-t="exit">Exit &amp; Billing</button><button data-t="rec">Records</button><button data-t="sch">DB Schema</button></nav></header>
+<main>
+<section id="dash"></section>
+<section id="entry" hidden>
+<div class="card"><h2>Register vehicle entry</h2>
+<div class="row"><div><label>Registration number</label><input id="plate" placeholder="DL 01 AB 1234" maxlength="13"></div>
+<div><label>Vehicle type</label><select id="vtype"><option>Car</option><option>Bike</option><option>EV</option></select></div>
+<div><label>Slot</label><select id="vslot"></select></div></div>
+<p><button class="btn p" id="goPark">Allocate slot &amp; issue ticket</button></p><div id="ticketOut"></div></div></section>
+<section id="exit" hidden>
+<div class="card"><h2>Exit &amp; payment</h2>
+<div class="row"><div><label>Active ticket</label><select id="tsel"></select></div>
+<div><label>Payment method</label><select id="pay"><option>UPI</option><option>Card</option><option>Cash</option></select></div></div>
+<div id="billBox" style="margin-top:14px"></div></div></section>
+<section id="rec" hidden>
+<div class="card"><h2>Database records</h2>
+<div class="row"><div><label>Table</label><select id="tbl"><option value="slots">parking_slot</option><option value="tickets">parking_ticket</option><option value="rates">rate_card</option></select></div>
+<div><label>Search</label><input id="q" placeholder="Filter rows..."></div></div>
+<div class="tw" style="margin-top:12px" id="tbox"></div>
+<p><button class="btn d" id="reset">Reset database to demo data</button></p></div></section>
+<section id="sch" hidden>
+<div class="card"><h2>Relational schema (MySQL)</h2>
+<pre>CREATE TABLE rate_card (
+  vehicle_type  ENUM('Bike','Car','EV') PRIMARY KEY,
+  rate_per_hour DECIMAL(6,2) NOT NULL
+);
+CREATE TABLE parking_slot (
+  slot_id   VARCHAR(8) PRIMARY KEY,
+  floor_no  INT NOT NULL,
+  slot_type ENUM('Bike','Car','EV') NOT NULL,
+  status    ENUM('FREE','OCCUPIED') DEFAULT 'FREE',
+  FOREIGN KEY (slot_type) REFERENCES rate_card(vehicle_type)
+);
+CREATE TABLE parking_ticket (
+  ticket_id    INT AUTO_INCREMENT PRIMARY KEY,
+  plate_no     VARCHAR(13) NOT NULL,
+  vehicle_type ENUM('Bike','Car','EV') NOT NULL,
+  slot_id      VARCHAR(8) NOT NULL,
+  entry_time   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  exit_time    DATETIME NULL,
+  fee          DECIMAL(8,2) NULL,
+  pay_method   ENUM('UPI','Card','Cash') NULL,
+  status       ENUM('ACTIVE','PAID') DEFAULT 'ACTIVE',
+  FOREIGN KEY (slot_id) REFERENCES parking_slot(slot_id),
+  FOREIGN KEY (vehicle_type) REFERENCES rate_card(vehicle_type)
+);</pre>
+<h3>Relationships</h3><p>rate_card 1 : N parking_slot &nbsp;|&nbsp; rate_card 1 : N parking_ticket &nbsp;|&nbsp; parking_slot 1 : N parking_ticket (a slot is reused by many tickets over time, but only one ACTIVE at once).</p>
+<h3>Useful queries for your report</h3>
+<pre>-- Free slots per floor
+SELECT floor_no, COUNT(*) AS free_slots FROM parking_slot WHERE status='FREE' GROUP BY floor_no;
+-- Total revenue by vehicle type
+SELECT vehicle_type, SUM(fee) FROM parking_ticket WHERE status='PAID' GROUP BY vehicle_type;
+-- Vehicles parked over 3 hours
+SELECT plate_no, slot_id FROM parking_ticket WHERE status='ACTIVE' AND TIMESTAMPDIFF(HOUR, entry_time, NOW())&gt;3;
+-- Most used slots
+SELECT slot_id, COUNT(*) AS uses FROM parking_ticket GROUP BY slot_id ORDER BY uses DESC LIMIT 5;
+-- Fee formula used in this app
+SELECT GREATEST(1, CEIL(TIMESTAMPDIFF(MINUTE, entry_time, NOW())/60)) * r.rate_per_hour
+FROM parking_ticket t JOIN rate_card r ON r.vehicle_type=t.vehicle_type WHERE t.ticket_id=1001;</pre>
+<p class="muted">This page calls a Node.js/Express API, which runs these tables, INSERT / UPDATE / SELECT statements and transactions on MySQL.</p></div></section>
+</main><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);let db={slots:[],tickets:[],rates:[]};
+const ICON={Bike:'🏍️',Car:'🚗',EV:'⚡'};
+async function api(path,body){try{const r=await fetch('/api/'+path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const j=await r.json();if(!r.ok)throw new Error(j.error||'Server error');return j}catch(e){toast(e.message||'Cannot reach server',1);return null}}
+async function load(){const j=await api('state');if(j)db=j;return!!j}
+async function park(plate,type,slot_id){const t=await api('park',{plate,type,slot_id});if(t)await load();return t}
+async function pay(ticket_id,method){const t=await api('pay',{ticket_id,method});if(t)await load();return t}
+const rate=t=>db.rates.find(r=>r.vehicle_type==t).rate_per_hour;
+const fmt=ms=>new Date(ms).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+const dur=ms=>{const m=Math.floor(ms/60000);return Math.floor(m/60)+'h '+m%60+'m'};
+const active=()=>db.tickets.filter(t=>t.status=='ACTIVE');
+const bill=(t,now=Date.now())=>{const h=Math.max(1,Math.ceil((now-t.entry_time)/36e5));return{h,r:rate(t.vehicle_type),amt:h*rate(t.vehicle_type)}};
+function toast(m,bad){const t=$('#toast');t.textContent=m;t.className='show'+(bad?' bad':'');clearTimeout(toast.h);toast.h=setTimeout(()=>t.className='',2600)}
+function tab(n){document.querySelectorAll('main section').forEach(s=>s.hidden=s.id!=n);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==n));render()}
+function render(){drawDash();fillSlots();drawExit();drawRec()}
+function drawDash(){const S=db.slots,occ=S.filter(s=>s.status=='OCCUPIED').length,td=new Date().toDateString();
+const rev=db.tickets.filter(t=>t.status=='PAID'&&new Date(t.exit_time).toDateString()==td).reduce((a,t)=>a+t.fee,0);
+let h=`<div class="stats"><div class="card stat"><b>${S.length}</b><span>Total slots</span></div><div class="card stat"><b style="color:var(--bad)">${occ}</b><span>Occupied</span></div><div class="card stat"><b style="color:var(--ok)">${S.length-occ}</b><span>Available</span></div><div class="card stat"><b>₹${rev}</b><span>Revenue today</span></div></div>`;
+h+='<div class="card"><h2>Live slot map <span class="muted" style="font-weight:400;font-size:13px">(click an occupied slot to bill it)</span></h2>';
+[1,2,3].forEach(f=>{const fs=S.filter(s=>s.floor_no==f),o=fs.filter(s=>s.status=='OCCUPIED').length;
+h+=`<h3>Floor ${f} · ${o}/${fs.length} occupied</h3><div class="bar"><div style="width:${o/fs.length*100}%"></div></div><div class="grid" style="margin-bottom:14px">`;
+fs.forEach(s=>{const t=active().find(x=>x.slot_id==s.slot_id);h+=`<button class="slot ${s.status=='FREE'?'f':'o'}" ${t?`onclick="goExit('${t.ticket_id}')"`:''}><big>${ICON[s.slot_type]}</big>${s.slot_id}<br>${t?t.plate_no:'Free'}</button>`});h+='</div>'});
+h+='</div><div class="card"><h2>Recent activity</h2><div class="tw"><table><tr><th>Ticket</th><th>Vehicle</th><th>Slot</th><th>Entry</th><th>Status</th></tr>';
+db.tickets.slice(-6).reverse().forEach(t=>h+=`<tr><td>${t.ticket_id}</td><td>${t.plate_no}</td><td>${t.slot_id}</td><td>${fmt(t.entry_time)}</td><td><span class="tag ${t.status=='ACTIVE'?'a':''}">${t.status}</span></td></tr>`);
+$('#dash').innerHTML=h+'</table></div></div>'}
+function fillSlots(){const ty=$('#vtype').value,cur=$('#vslot').value;
+$('#vslot').innerHTML='<option value="">Auto-assign nearest free slot</option>'+db.slots.filter(s=>s.slot_type==ty&&s.status=='FREE').map(s=>`<option ${s.slot_id==cur?'selected':''}>${s.slot_id}</option>`).join('')}
+let selT='';
+function drawExit(){const a=active(),sel=$('#tsel');if(!a.some(t=>t.ticket_id==selT))selT=a.length?a[0].ticket_id:'';
+sel.innerHTML=a.length?a.map(t=>`<option value="${t.ticket_id}" ${t.ticket_id==selT?'selected':''}>${t.ticket_id} · ${t.plate_no} · ${t.slot_id}</option>`).join(''):'<option>No active tickets</option>';
+const t=a.find(x=>x.ticket_id==selT);if(!t){$('#billBox').innerHTML='<p class="muted">No vehicles are currently parked.</p>'+($('#billBox').dataset.r||'');return}
+const b=bill(t),now=Date.now();
+$('#billBox').innerHTML=`<div class="bill"><span>Vehicle</span><b>${t.plate_no} (${t.vehicle_type})</b></div><div class="bill"><span>Slot</span><b>${t.slot_id}</b></div><div class="bill"><span>Entered</span><b>${fmt(t.entry_time)}</b></div><div class="bill"><span>Duration</span><b>${dur(now-t.entry_time)}</b></div><div class="bill"><span>Billed hours × rate</span><b>${b.h} × ₹${b.r}</b></div><div class="bill t"><span>Amount due</span><span>₹${b.amt}</span></div><p><button class="btn p" id="doPay">Collect payment &amp; release slot</button></p>`;
+$('#doPay').onclick=async()=>{const p=await pay(t.ticket_id,$('#pay').value);if(p){toast('Payment received · slot '+p.slot_id+' is free');render();$('#billBox').insertAdjacentHTML('afterbegin',`<div class="rc"><b>Receipt ${p.ticket_id}</b><br>${p.plate_no} · ${p.slot_id} · ₹${p.fee} via ${p.pay_method}<br><span class="muted">Out: ${fmt(p.exit_time)}</span></div>`)}}}
+function goExit(id){selT=id;tab('exit')}
+function drawRec(){const k=$('#tbl').value,q=$('#q').value.toLowerCase();let rows=db[k].map(r=>({...r}));
+if(k=='tickets')rows.forEach(r=>{r.entry_time=fmt(r.entry_time);r.exit_time=r.exit_time?fmt(r.exit_time):'NULL';r.fee=r.fee??'NULL';r.pay_method=r.pay_method??'NULL'});
+rows=rows.filter(r=>!q||Object.values(r).join(' ').toLowerCase().includes(q));
+if(!rows.length){$('#tbox').innerHTML='<p class="muted">No rows.</p>';return}
+const c=Object.keys(rows[0]);$('#tbox').innerHTML='<table><tr>'+c.map(x=>`<th>${x}</th>`).join('')+'</tr>'+rows.map(r=>'<tr>'+c.map(x=>`<td>${r[x]}</td>`).join('')+'</tr>').join('')+`</table><p class="muted">${rows.length} row(s)</p>`}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=async()=>{await load();tab(b.dataset.t)});
+$('#vtype').onchange=fillSlots;$('#tsel').onchange=e=>{selT=e.target.value;drawExit()};$('#tbl').onchange=$('#q').oninput=drawRec;
+$('#goPark').onclick=async()=>{const t=await park($('#plate').value,$('#vtype').value,$('#vslot').value);if(!t)return;
+$('#ticketOut').innerHTML=`<div class="rc"><b>Ticket ${t.ticket_id}</b><br>Vehicle ${t.plate_no} (${t.vehicle_type}) → slot <b>${t.slot_id}</b> on floor ${t.slot_id[1]}<br><span class="muted">Entry ${fmt(t.entry_time)} · ₹${rate(t.vehicle_type)}/hour, minimum 1 hour</span></div>`;
+$('#plate').value='';toast('Ticket issued · slot '+t.slot_id);render()};
+$('#reset').onclick=async()=>{if(confirm('Delete all data and restore demo records?')){await api('reset',{});await load();render();toast('Database reset')}};
+load().then(ok=>{if(ok)tab('dash');else $('#dash').innerHTML='<div class="card"><h2>Cannot reach the server</h2><p>Start the backend with <b>npm start</b> and open <b>http://localhost:3000</b> in your browser.</p></div>'});setInterval(()=>{if(!$('#exit').hidden&&active().length)drawExit()},30000);
+</script></body></html>
